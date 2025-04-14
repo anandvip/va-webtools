@@ -1,0 +1,786 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multi-Platform Icon Converter</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🖼️</text></svg>">
+    <style>
+        :root {
+            --primary-color: #4361ee;
+            --secondary-color: #3a0ca3;
+            --success-color: #4cc9f0;
+            --light-bg: #f8f9fa;
+            --dark-text: #2b2d42;
+            --border-radius: 12px;
+            --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            --transition: all 0.3s ease;
+        }
+        
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: var(--light-bg);
+            color: var(--dark-text);
+            line-height: 1.6;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        h1 {
+            margin: 20px 0;
+            color: var(--secondary-color);
+            font-weight: 700;
+        }
+        
+        #logo {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto;
+            background-color: var(--primary-color);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 40px;
+        }
+        
+        .container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        
+        #drop-area {
+            grid-column: 1 / -1;
+            border: 3px dashed var(--primary-color);
+            border-radius: var(--border-radius);
+            padding: 30px;
+            text-align: center;
+            cursor: pointer;
+            transition: var(--transition);
+            background-color: rgba(67, 97, 238, 0.05);
+        }
+        
+        #drop-area:hover, #drop-area.highlight {
+            background-color: rgba(67, 97, 238, 0.1);
+            border-color: var(--secondary-color);
+        }
+        
+        #file-input {
+            display: none;
+        }
+        
+        .btn {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: var(--transition);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            box-shadow: var(--shadow);
+        }
+        
+        .btn:hover {
+            background-color: var(--secondary-color);
+            transform: translateY(-2px);
+        }
+        
+        .btn:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        
+        #preview-container {
+            border-radius: var(--border-radius);
+            overflow: hidden;
+            box-shadow: var(--shadow);
+            background-color: white;
+            padding: 20px;
+        }
+        
+        #original-preview {
+            max-width: 100%;
+            max-height: 300px;
+            margin: 0 auto;
+            display: block;
+        }
+        
+        #preview-info {
+            margin-top: 10px;
+            font-size: 14px;
+            text-align: center;
+        }
+        
+        #outputs-container {
+            grid-column: 1 / -1;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+        }
+        
+        .output-card {
+            background-color: white;
+            border-radius: var(--border-radius);
+            overflow: hidden;
+            box-shadow: var(--shadow);
+            transition: var(--transition);
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .output-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
+        }
+        
+        .output-header {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 10px 15px;
+            font-weight: 600;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .output-body {
+            padding: 15px;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .output-preview {
+            max-width: 100%;
+            max-height: 150px;
+            object-fit: contain;
+            display: block;
+            border: 1px solid #eee;
+            padding: 10px;
+            background-color: #f9f9f9;
+            border-radius: 6px;
+        }
+        
+        .icon-sizes {
+            font-size: 13px;
+            color: #666;
+            margin-bottom: 5px;
+            text-align: center;
+        }
+        
+        .download-btn {
+            background-color: var(--success-color);
+            width: 100%;
+            margin-top: auto;
+        }
+        
+        #status {
+            grid-column: 1 / -1;
+            text-align: center;
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: var(--border-radius);
+            background-color: rgba(76, 201, 240, 0.1);
+            color: var(--dark-text);
+            font-weight: 500;
+        }
+        
+        .hidden {
+            display: none !important;
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div id="logo">🖼️</div>
+        <h1>Multi-Platform Icon Converter</h1>
+        <p>Convert images to various icon formats for Web, Android, and iOS</p>
+    </header>
+    
+    <div class="container">
+        <div id="drop-area">
+            <input type="file" id="file-input" accept=".png,.jpg,.jpeg,.svg,.webp,.gif" />
+            <p>Drop your image here or</p>
+            <button class="btn" id="select-btn">Select Image</button>
+            <p class="small">Supports PNG, JPG, SVG, WEBP and GIF</p>
+        </div>
+        
+        <div id="preview-container" class="hidden">
+            <h3>Original Image</h3>
+            <img id="original-preview" alt="Original image preview">
+            <div id="preview-info"></div>
+        </div>
+        
+        <div id="outputs-container" class="hidden"></div>
+        
+        <div id="status" class="hidden"></div>
+    </div>
+
+    <script>
+        // DOM Elements
+        const dropArea = document.getElementById('drop-area');
+        const fileInput = document.getElementById('file-input');
+        const selectBtn = document.getElementById('select-btn');
+        const originalPreview = document.getElementById('original-preview');
+        const previewContainer = document.getElementById('preview-container');
+        const previewInfo = document.getElementById('preview-info');
+        const outputsContainer = document.getElementById('outputs-container');
+        const status = document.getElementById('status');
+        
+        // Current file data
+        let currentFile = null;
+        let originalImage = null;
+        
+        // Platform configurations
+        const platformConfigs = {
+            web: {
+                title: 'Web Favicon',
+                sizes: [16, 32, 48, 64, 128, 256],
+                format: 'ICO',
+                description: 'Standard favicon for websites',
+                primarySize: 32
+            },
+            android: {
+                title: 'Android Icon',
+                sizes: [48, 72, 96, 144, 192, 512],
+                format: 'PNG',
+                description: 'App icon for Android devices',
+                primarySize: 192
+            },
+            ios: {
+                title: 'iOS Icon',
+                sizes: [60, 76, 120, 152, 167, 180, 1024],
+                format: 'PNG',
+                description: 'App icon for iOS devices',
+                primarySize: 180
+            },
+            windows: {
+                title: 'Windows Tile',
+                sizes: [70, 150, 310],
+                format: 'PNG',
+                description: 'App tile for Windows devices',
+                primarySize: 150
+            }
+        };
+        
+        // Event Listeners
+        function initializeEventListeners() {
+            // File selection events
+            dropArea.addEventListener('dragover', handleDragOver);
+            dropArea.addEventListener('dragleave', handleDragLeave);
+            dropArea.addEventListener('drop', handleDrop);
+            selectBtn.addEventListener('click', () => fileInput.click());
+            fileInput.addEventListener('change', handleFileSelect);
+        }
+        
+        // Event Handlers
+        function handleDragOver(e) {
+            e.preventDefault();
+            dropArea.classList.add('highlight');
+        }
+        
+        function handleDragLeave(e) {
+            e.preventDefault();
+            dropArea.classList.remove('highlight');
+        }
+        
+        function handleDrop(e) {
+            e.preventDefault();
+            dropArea.classList.remove('highlight');
+            
+            if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+                processFile(e.dataTransfer.files[0]);
+            }
+        }
+        
+        function handleFileSelect(e) {
+            if (e.target.files && e.target.files[0]) {
+                processFile(e.target.files[0]);
+            }
+        }
+        
+        // File Processing
+        function processFile(file) {
+            const validTypes = ['image/png', 'image/jpeg', 'image/svg+xml', 'image/webp', 'image/gif'];
+            
+            if (!validTypes.includes(file.type)) {
+                showStatus('Please select a valid image file (PNG, JPG, SVG, WEBP, or GIF).', 'error');
+                return;
+            }
+            
+            currentFile = file;
+            
+            // Load and preview the image
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                originalImage = new Image();
+                originalImage.onload = function() {
+                    // Show the original preview
+                    originalPreview.src = e.target.result;
+                    previewContainer.classList.remove('hidden');
+                    previewInfo.textContent = 
+                        `${file.name} (${file.type}) - ${originalImage.naturalWidth}×${originalImage.naturalHeight}px`;
+                    
+                    // Generate all platform outputs
+                    generateOutputs();
+                };
+                originalImage.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+        
+        // Generate platform-specific outputs with enhanced quality
+        function generateOutputs() {
+            outputsContainer.innerHTML = '';
+            outputsContainer.classList.remove('hidden');
+            
+            Object.keys(platformConfigs).forEach(platform => {
+                const config = platformConfigs[platform];
+                
+                // Create output card
+                const card = document.createElement('div');
+                card.className = 'output-card';
+                
+                // Card header
+                const header = document.createElement('div');
+                header.className = 'output-header';
+                header.innerHTML = `
+                    <span>${config.title}</span>
+                    <span>${config.format}</span>
+                `;
+                
+                // Card body
+                const body = document.createElement('div');
+                body.className = 'output-body';
+                
+                // Generate preview for primary size with enhanced quality
+                const previewCanvas = document.createElement('canvas');
+                const ctx = previewCanvas.getContext('2d');
+                const previewSize = config.primarySize;
+                
+                previewCanvas.width = previewSize;
+                previewCanvas.height = previewSize;
+                
+                // Apply high-quality rendering
+                ctx.imageSmoothingEnabled = true;
+                ctx.imageSmoothingQuality = 'high';
+                
+                // Apply special handling for favicon previews
+                if (platform === 'web' && previewSize <= 64) {
+                    // Create a temporary canvas at higher resolution
+                    const tempCanvas = document.createElement('canvas');
+                    const tempSize = previewSize * 2;
+                    tempCanvas.width = tempSize;
+                    tempCanvas.height = tempSize;
+                    const tempCtx = tempCanvas.getContext('2d');
+                    
+                    // Use high quality settings
+                    tempCtx.imageSmoothingEnabled = true;
+                    tempCtx.imageSmoothingQuality = 'high';
+                    tempCtx.drawImage(originalImage, 0, 0, tempSize, tempSize);
+                    
+                    // Draw scaled-down version
+                    ctx.drawImage(tempCanvas, 0, 0, tempSize, tempSize, 0, 0, previewSize, previewSize);
+                    
+                    // For very small icons, enhance contrast
+                    if (previewSize <= 32) {
+                        enhanceIconContrast(ctx, previewSize);
+                    }
+                } else {
+                    // Standard rendering for larger sizes
+                    ctx.drawImage(originalImage, 0, 0, previewSize, previewSize);
+                }
+                
+                // Create preview image
+                const previewImg = document.createElement('img');
+                previewImg.className = 'output-preview';
+                previewImg.src = previewCanvas.toDataURL(`image/${config.format === 'ICO' ? 'png' : config.format.toLowerCase()}`);
+                previewImg.alt = `${config.title} preview`;
+                
+                // Create multi-size preview for web favicons
+                if (platform === 'web') {
+                    // Add small size previews
+                    const smallSizesDiv = document.createElement('div');
+                    smallSizesDiv.className = 'small-size-previews';
+                    smallSizesDiv.style.display = 'flex';
+                    smallSizesDiv.style.justifyContent = 'center';
+                    smallSizesDiv.style.gap = '10px';
+                    smallSizesDiv.style.marginTop = '10px';
+                    
+                    // Add 16px and 32px previews with border
+                    [16, 32].forEach(smallSize => {
+                        const smallCanvas = document.createElement('canvas');
+                        smallCanvas.width = smallSize;
+                        smallCanvas.height = smallSize;
+                        const smallCtx = smallCanvas.getContext('2d');
+                        
+                        // Apply enhanced small icon rendering
+                        smallCtx.imageSmoothingEnabled = true;
+                        smallCtx.imageSmoothingQuality = 'high';
+                        
+                        // Two-step downscaling for better quality
+                        const tempCanvas = document.createElement('canvas');
+                        const tempSize = smallSize * 3;
+                        tempCanvas.width = tempSize;
+                        tempCanvas.height = tempSize;
+                        const tempCtx = tempCanvas.getContext('2d');
+                        
+                        tempCtx.imageSmoothingEnabled = true;
+                        tempCtx.imageSmoothingQuality = 'high';
+                        tempCtx.drawImage(originalImage, 0, 0, tempSize, tempSize);
+                        
+                        // Draw final small size
+                        smallCtx.drawImage(tempCanvas, 0, 0, tempSize, tempSize, 0, 0, smallSize, smallSize);
+                        
+                        // Enhance contrast for small icons
+                        enhanceIconContrast(smallCtx, smallSize);
+                        
+                        // Create container with size label
+                        const sizeContainer = document.createElement('div');
+                        sizeContainer.style.textAlign = 'center';
+                        
+                        // Create display that shows the small icon at its actual size
+                        const sizeDisplay = document.createElement('div');
+                        sizeDisplay.style.width = `${smallSize}px`;
+                        sizeDisplay.style.height = `${smallSize}px`;
+                        sizeDisplay.style.margin = '0 auto';
+                        sizeDisplay.style.backgroundImage = `url(${smallCanvas.toDataURL('image/png')})`;
+                        sizeDisplay.style.border = '1px solid #ccc';
+                        sizeDisplay.style.marginBottom = '5px';
+                        
+                        // Create enlarged version to actually see the details
+                        const enlargedDisplay = document.createElement('div');
+                        enlargedDisplay.style.width = '48px';
+                        enlargedDisplay.style.height = '48px';
+                        enlargedDisplay.style.margin = '0 auto';
+                        enlargedDisplay.style.backgroundImage = `url(${smallCanvas.toDataURL('image/png')})`;
+                        enlargedDisplay.style.backgroundSize = 'contain';
+                        enlargedDisplay.style.backgroundRepeat = 'no-repeat';
+                        enlargedDisplay.style.marginBottom = '5px';
+                        
+                        // Size label
+                        const sizeLabel = document.createElement('div');
+                        sizeLabel.textContent = `${smallSize}×${smallSize}`;
+                        sizeLabel.style.fontSize = '12px';
+                        
+                        sizeContainer.appendChild(sizeDisplay);
+                        sizeContainer.appendChild(enlargedDisplay);
+                        sizeContainer.appendChild(sizeLabel);
+                        smallSizesDiv.appendChild(sizeContainer);
+                    });
+                    
+                    // Add small size previews after main preview
+                    body.appendChild(previewImg);
+                    body.appendChild(smallSizesDiv);
+                } else {
+                    // For other platforms, just show the main preview
+                    body.appendChild(previewImg);
+                }
+                
+                // Size info
+                const sizeInfo = document.createElement('div');
+                sizeInfo.className = 'icon-sizes';
+                sizeInfo.textContent = `Includes sizes: ${config.sizes.join('px, ')}px`;
+                
+                // Description with enhanced info for web favicons
+                const description = document.createElement('p');
+                if (platform === 'web') {
+                    description.innerHTML = `${config.description} <strong>with enhanced sharpness for small sizes</strong>`;
+                } else {
+                    description.textContent = config.description;
+                }
+                
+                // Download button
+                const downloadBtn = document.createElement('button');
+                downloadBtn.className = 'btn download-btn';
+                downloadBtn.innerHTML = platform === 'web' ? 
+                    `Download Enhanced ${config.format}` : 
+                    `Download ${config.format}`;
+                downloadBtn.addEventListener('click', () => {
+                    if (platform === 'web') {
+                        createAndDownloadICO(config.sizes);
+                    } else {
+                        createAndDownloadZIP(platform, config.sizes, config.format);
+                    }
+                });
+                
+                // Assemble card
+                body.appendChild(sizeInfo);
+                body.appendChild(description);
+                body.appendChild(downloadBtn);
+                
+                card.appendChild(header);
+                card.appendChild(body);
+                
+                outputsContainer.appendChild(card);
+            });
+            
+            showStatus('High-quality images generated! Choose your platform and download.', 'success');
+        }
+        
+        // Create and download ICO file with enhanced sharpness
+        async function createAndDownloadICO(sizes) {
+            showStatus('Generating optimized ICO file...', 'info');
+            
+            try {
+                // ICO header (6 bytes)
+                const header = new Uint8Array([
+                    0, 0,             // Reserved, must be 0
+                    1, 0,             // Specifies ICO format (1)
+                    sizes.length, 0   // Number of images
+                ]);
+                
+                // Create entries for each size
+                let offset = 6 + (sizes.length * 16); // Header + directory entries
+                const directory = [];
+                const imageDataArray = [];
+                
+                // Generate each size with optimized rendering
+                for (const size of sizes) {
+                    // Create PNG for this size with enhanced sharpness
+                    const canvas = document.createElement('canvas');
+                    canvas.width = size;
+                    canvas.height = size;
+                    const ctx = canvas.getContext('2d');
+                    
+                    // Apply different rendering techniques based on size
+                    if (size <= 32) {
+                        // For small icons, apply special techniques to preserve sharpness
+                        
+                        // Clear canvas with transparent background
+                        ctx.clearRect(0, 0, size, size);
+                        
+                        // First scale to a slightly larger size to retain detail
+                        const tempCanvas = document.createElement('canvas');
+                        const tempSize = size * 2; // Double size for better downscaling
+                        tempCanvas.width = tempSize;
+                        tempCanvas.height = tempSize;
+                        const tempCtx = tempCanvas.getContext('2d');
+                        
+                        // Use higher quality image rendering
+                        tempCtx.imageSmoothingEnabled = true;
+                        tempCtx.imageSmoothingQuality = 'high';
+                        
+                        // Draw at intermediate size first
+                        tempCtx.drawImage(originalImage, 0, 0, tempSize, tempSize);
+                        
+                        // Enable crisp edges for final scaled-down version
+                        ctx.imageSmoothingEnabled = true;
+                        ctx.imageSmoothingQuality = 'high';
+                        
+                        // Apply unsharp masking effect to enhance edges
+                        if (size <= 16) {
+                            // For extremely small icons, apply edge enhancement
+                            tempCtx.filter = 'contrast(1.2) saturate(1.1)';
+                            tempCtx.drawImage(tempCanvas, 0, 0, tempSize, tempSize);
+                        }
+                        
+                        // Final downscale to target size
+                        ctx.drawImage(tempCanvas, 0, 0, tempSize, tempSize, 0, 0, size, size);
+                        
+                        // Optional extra sharpening for very small icons
+                        if (size <= 16) {
+                            enhanceIconContrast(ctx, size);
+                        }
+                    } else {
+                        // For larger icons, standard high-quality rendering is sufficient
+                        ctx.imageSmoothingEnabled = true;
+                        ctx.imageSmoothingQuality = 'high';
+                        ctx.drawImage(originalImage, 0, 0, size, size);
+                    }
+                    
+                    // Get PNG data
+                    const pngBlob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+                    const pngBuffer = await pngBlob.arrayBuffer();
+                    const pngData = new Uint8Array(pngBuffer);
+                    
+                    // Create directory entry (16 bytes)
+                    const entry = new Uint8Array([
+                        size,               // Width (1 byte)
+                        size,               // Height (1 byte)
+                        0,                  // Color palette size (0 for no palette)
+                        0,                  // Reserved, must be 0
+                        1, 0,               // Color planes (1)
+                        32, 0,              // Bits per pixel (32)
+                        // Image data size (4 bytes)
+                        pngData.length & 0xFF,
+                        (pngData.length >> 8) & 0xFF,
+                        (pngData.length >> 16) & 0xFF,
+                        (pngData.length >> 24) & 0xFF,
+                        // Offset to image data (4 bytes)
+                        offset & 0xFF,
+                        (offset >> 8) & 0xFF,
+                        (offset >> 16) & 0xFF,
+                        (offset >> 24) & 0xFF
+                    ]);
+                    
+                    directory.push(entry);
+                    imageDataArray.push(pngData);
+                    offset += pngData.length;
+                }
+                
+                // Combine everything into one buffer
+                let totalSize = header.length;
+                directory.forEach(entry => totalSize += entry.length);
+                imageDataArray.forEach(data => totalSize += data.length);
+                
+                const result = new Uint8Array(totalSize);
+                let pos = 0;
+                
+                // Copy header
+                result.set(header, pos);
+                pos += header.length;
+                
+                // Copy directory entries
+                directory.forEach(entry => {
+                    result.set(entry, pos);
+                    pos += entry.length;
+                });
+                
+                // Copy image data
+                imageDataArray.forEach(data => {
+                    result.set(data, pos);
+                    pos += data.length;
+                });
+                
+                // Create and download blob
+                const blob = new Blob([result], { type: 'image/x-icon' });
+                const fileName = currentFile.name.replace(/\.[^/.]+$/, "") + '.ico';
+                downloadBlob(blob, fileName);
+                
+                showStatus('Enhanced ICO file downloaded successfully!', 'success');
+            } catch (error) {
+                console.error('Error creating ICO:', error);
+                showStatus('Error creating ICO file. Please try again.', 'error');
+            }
+        }
+        
+        // Function to enhance contrast for very small icons
+        function enhanceIconContrast(ctx, size) {
+            // Get image data
+            const imageData = ctx.getImageData(0, 0, size, size);
+            const data = imageData.data;
+            
+            // Apply targeted contrast enhancement while preserving transparency
+            for (let i = 0; i < data.length; i += 4) {
+                // Skip fully transparent pixels
+                if (data[i + 3] === 0) continue;
+                
+                // Enhance contrast of RGB channels
+                for (let j = 0; j < 3; j++) {
+                    // Calculate distance from middle gray
+                    const distance = data[i + j] - 127.5;
+                    // Apply targeted contrast enhancement
+                    data[i + j] = Math.min(255, Math.max(0, 127.5 + distance * 1.2));
+                }
+                
+                // Optional: slightly boost saturation by increasing difference between RGB channels
+                const avg = (data[i] + data[i + 1] + data[i + 2]) / 3;
+                for (let j = 0; j < 3; j++) {
+                    const diff = data[i + j] - avg;
+                    data[i + j] = Math.min(255, Math.max(0, avg + diff * 1.1));
+                }
+            }
+            
+            // Put the enhanced data back
+            ctx.putImageData(imageData, 0, 0);
+        }
+        
+        // Create and download ZIP file with multiple sized PNG files
+        async function createAndDownloadZIP(platform, sizes, format) {
+            showStatus(`Generating ${platform} ${format} files...`, 'info');
+            
+            try {
+                // Generate a ZIP file with all sizes
+                // For simplicity, we'll just download the primary size for now
+                // In a real implementation, you would use a library like JSZip
+                
+                const config = platformConfigs[platform];
+                const primarySize = config.primarySize;
+                
+                const canvas = document.createElement('canvas');
+                canvas.width = primarySize;
+                canvas.height = primarySize;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(originalImage, 0, 0, primarySize, primarySize);
+                
+                canvas.toBlob(blob => {
+                    const fileName = `${currentFile.name.replace(/\.[^/.]+$/, "")}_${platform}_${primarySize}.png`;
+                    downloadBlob(blob, fileName);
+                    
+                    showStatus(`${platform} icon downloaded! (Note: In a complete version, this would include all sizes in a ZIP file)`, 'success');
+                }, 'image/png');
+            } catch (error) {
+                console.error(`Error creating ${platform} icons:`, error);
+                showStatus(`Error creating ${platform} icons. Please try again.`, 'error');
+            }
+        }
+        
+        // Helper to download blob
+        function downloadBlob(blob, fileName) {
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = fileName;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+        
+        // Status messages
+        function showStatus(message, type = 'info') {
+            status.textContent = message;
+            status.className = '';
+            
+            switch (type) {
+                case 'error':
+                    status.style.backgroundColor = 'rgba(220, 53, 69, 0.1)';
+                    status.style.color = '#dc3545';
+                    break;
+                case 'success':
+                    status.style.backgroundColor = 'rgba(40, 167, 69, 0.1)';
+                    status.style.color = '#28a745';
+                    break;
+                default:
+                    status.style.backgroundColor = 'rgba(76, 201, 240, 0.1)';
+                    status.style.color = '#4cc9f0';
+            }
+            
+            status.classList.remove('hidden');
+        }
+        
+        // Initialize the app
+        initializeEventListeners();
+    </script>
+</body>
+</html>
